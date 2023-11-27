@@ -448,7 +448,7 @@ class ProfileText(Resource):
         media_data = []
 
         for text_title in user_data.get('text', []):
-            url = url_for('static', filename=f'texts/{video_title}', _external=True)
+            url = url_for('static', filename=f'texts/{text_title}', _external=True)
             media_data.append({
                 'username': user_data['username'],
                 'url': url,
@@ -456,6 +456,90 @@ class ProfileText(Resource):
             })
 
         return jsonify(media_data)
+
+class Images(Resource):
+    def get(self):
+        media_objects = mongo.db.images.find()
+        media_list = []
+
+        for media_object in media_objects:
+            # Extracting data for each object
+            username = media_object.get('username')
+            file_name = media_object.get('file_name')
+            time = media_object.get('time')
+            date = media_object.get('date')
+
+            # Create a link for the file
+            file_link = url_for('static', filename=f'images/{file_name}', _external=True)
+
+            # Prepare data for each object
+            media_data = {
+                'username': username,
+                'file_link': file_link,
+                'time': time,
+                'date': date,
+                'type': 'Image'
+            }
+            media_list.append(media_data)
+
+        return jsonify(media_list)
+
+class Videos(Resource):
+    def get(self):
+        media_objects = mongo.db.videos.find()
+        media_list = []
+
+        for media_object in media_objects:
+            # Extracting data for each object
+            username = media_object.get('username')
+            file_name = media_object.get('file_name')
+            time = media_object.get('time')
+            date = media_object.get('date')
+
+            # Create a link for the file
+            file_link = url_for('static', filename=f'video/{file_name}', _external=True)
+
+            # Prepare data for each object
+            media_data = {
+                'username': username,
+                'file_link': file_link,
+                'time': time,
+                'date': date,
+                'type':'Video'
+            }
+
+            # Append data to the list
+            media_list.append(media_data)
+
+        return jsonify(media_list)
+class Texts(Resource):
+    def get(self):
+        media_objects = mongo.db.texts.find()
+        media_list = []
+
+        for media_object in media_objects:
+            # Extracting data for each object
+            username = media_object.get('username')
+            file_name = media_object.get('file_name')
+            time = media_object.get('time')
+            date = media_object.get('date')
+
+            # Create a link for the file
+            file_link = url_for('static', filename=f'texts/{file_name}', _external=True)
+
+            # Prepare data for each object
+            media_data = {
+                'username': username,
+                'file_link': file_link,
+                'time': time,
+                'date': date,
+                'type' : 'Text'
+            }
+
+            # Append data to the list
+            media_list.append(media_data)
+
+        return jsonify(media_list)
 
 
 api.add_resource(Register, '/register')
@@ -475,8 +559,8 @@ api.add_resource(Visit_Profile, '/profile/<username>')
 api.add_resource(ProfileImage, '/profile/image/<username>','/profile/image')
 api.add_resource(ProfileVideo, '/profile/video/<username>','/profile/video')
 api.add_resource(ProfileText, '/profile/text/<username>','/profile/text')
-# api.add_resource(Images, '/image')
-# api.add_resource(Videos, '/video')
-# api.add_resource(Texts, '/text')
+api.add_resource(Images, '/image')
+api.add_resource(Videos, '/video')
+api.add_resource(Texts, '/text')
 if __name__ == '__main__':
     app.run(debug=True)
