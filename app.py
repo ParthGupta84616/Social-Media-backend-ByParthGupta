@@ -1,5 +1,5 @@
 from datetime import datetime
-from flask import Flask, request,jsonify
+from flask import Flask, request, jsonify, url_for
 from flask_bcrypt import Bcrypt
 from flask_pymongo import PyMongo
 from flask_restful import Resource, Api
@@ -7,13 +7,8 @@ from Verify import is_valid_email, send_email,is_valid_password,generate_access_
 import random
 from Verify import generate_unique_filename
 from flask_jwt_extended import JWTManager, get_jwt_identity, jwt_required
-from flask_uploads import UploadSet, configure_uploads, IMAGES, TEXT
 from flask_uploads import UploadSet, IMAGES, TEXT
 from flask_uploads import configure_uploads
-from bson import ObjectId
-
-
-
 app = Flask(__name__)
 app.config['MONGO_URI'] = 'mongodb://localhost:27017/social_network'
 api = Api(app)
@@ -28,7 +23,8 @@ videos = UploadSet('videos', ('mp4', 'avi', 'mov'))  # Specify video file extens
 app.config['UPLOADED_PHOTOS_DEST'] = 'S:/Media Storage/images'
 app.config['UPLOADED_TEXTS_DEST'] = 'S:/Media Storage/texts'
 app.config['UPLOADED_VIDEOS_DEST'] = 'S:/Media Storage/videos'
-
+app.static_url_path = '/static'
+app.static_folder = 'S:/Media Storage'
 
 configure_uploads(app, (image, texts, videos))
 
@@ -193,15 +189,14 @@ class Profile(Resource):
     @jwt_required()
     def get(self):
         current_user = get_jwt_identity()
-
-
         user_profile = mongo.db.users.find_one({'username': current_user})
-        number_followers = len(user_profile.get('follower', []))
-        number_followings = len(user_profile.get('following', []))
-        number_tweets = len(user_profile.get('tweets', []))
-        number_reels = len(user_profile.get('reels', []))
-
         if user_profile:
+            number_followers = len(user_profile.get('follower', []))
+            number_followings = len(user_profile.get('following', []))
+            number_tweets = len(user_profile.get('text', []))
+            number_reels = len(user_profile.get('video', []))
+            number_photos = len(user_profile.get('image', []))
+
             return {
                 'display_picture': user_profile.get('display_picture', None),
                 'username': user_profile.get('username', None),
@@ -209,11 +204,10 @@ class Profile(Resource):
                 'country': user_profile.get('country', None),
                 'follower': number_followers,
                 'following': number_followings,
-                'number-tweets': number_tweets,
-                'number-reels': number_reels
-            }
-        else:
-            return {'message': 'User not found'}, 404
+                'number_tweets': number_tweets,
+                'number_reels': number_reels,
+                'number_photos': number_photos
+            }, 200
 
     @jwt_required()
     def put(self):
@@ -332,9 +326,6 @@ class UploadImage(Resource):
         username = get_jwt_identity()
         file_extension = file.filename.rsplit('.', 1)[-1].lower()
 
-        if file_extension not in IMAGES:
-            raise UnsupportedMediaType("Invalid file extension")
-
         unique_name = str(generate_unique_filename("."+file_extension))
         filename = image.save(file, name=unique_name)
 
@@ -399,6 +390,31 @@ class UploadText(Resource):
                 }
             )
 
+class ProfileImage(Resource):
+    @jwt_required()
+    def get(self,username=None):
+        if not username:
+            username = get_jwt_identity()
+
+        user_data = mongo.db.users.find_one({'username': username})
+
+        if not user_data:
+            return jsonify({'message': 'User not found'}), 404
+
+        media_data = []
+
+        for image_title in user_data.get('image', []):
+            url = url_for('static', filename=f'images/{image_title}', _external=True)
+            media_data.append({
+                'username': user_data['username'],
+                'url': url,
+                'media_type': 'image'
+            })
+
+        return jsonify(media_data)
+class Profile
+
+
 
 api.add_resource(Register, '/register')
 api.add_resource(RegisterVerify, '/register_verify/<username>')
@@ -413,19 +429,12 @@ api.add_resource(Profile, '/profile')
 api.add_resource(UploadImage,'/upload_image')
 api.add_resource(UploadVideo,'/upload_video')
 api.add_resource(UploadText,'/upload_text')
-
-
 api.add_resource(Visit_Profile, '/profile/<username>')
-# api.add_resource(ProfileImage, '/profile/image/<username>')
-# api.add_resource(ProfileVideo, '/profile/video/<username>')
-# api.add_resource(ProfileText, '/profile/text/<username>')
-
-#
-# api.add_resource(ProfileImage, '/profile/image')
-# api.add_resource(ProfileImage, '/profile/video')
-# api.add_resource(ProfileImage, '/profile/text')
-
-
-
+api.add_resource(ProfileImage, '/profile/image/<username>','/profile/image')
+api.add_resource(ProfileVideo, '/profile/video/<username>','/profile/video')
+api.add_resource(ProfileText, '/profile/text/<username>','/profile/text')
+# api.add_resource(Images, '/image')
+# api.add_resource(Videos, '/video')
+# api.add_resource(Texts, '/text')
 if __name__ == '__main__':
     app.run(debug=True)
