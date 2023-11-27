@@ -412,8 +412,50 @@ class ProfileImage(Resource):
             })
 
         return jsonify(media_data)
-class Profile
+class ProfileVideo(Resource):
+    @jwt_required()
+    def get(self,username=None):
+        if not username:
+            username = get_jwt_identity()
 
+        user_data = mongo.db.users.find_one({'username': username})
+
+        if not user_data:
+            return jsonify({'message': 'User not found'}), 404
+
+        media_data = []
+
+        for video_title in user_data.get('video', []):
+            url = url_for('static', filename=f'videos/{video_title}', _external=True)
+            media_data.append({
+                'username': user_data['username'],
+                'url': url,
+                'media_type': 'video'
+            })
+
+        return jsonify(media_data)
+class ProfileText(Resource):
+    @jwt_required()
+    def get(self,username=None):
+        if not username:
+            username = get_jwt_identity()
+
+        user_data = mongo.db.users.find_one({'username': username})
+
+        if not user_data:
+            return jsonify({'message': 'User not found'}), 404
+
+        media_data = []
+
+        for text_title in user_data.get('text', []):
+            url = url_for('static', filename=f'texts/{video_title}', _external=True)
+            media_data.append({
+                'username': user_data['username'],
+                'url': url,
+                'media_type': 'text'
+            })
+
+        return jsonify(media_data)
 
 
 api.add_resource(Register, '/register')
