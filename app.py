@@ -3,7 +3,7 @@ from flask import Flask, request, jsonify, url_for
 from flask_bcrypt import Bcrypt
 from flask_pymongo import PyMongo
 from flask_restful import Resource, Api
-from Verify import is_valid_email, send_email,is_valid_password,generate_access_token, set_true_after_5_minutes
+from Verify import is_valid_email, send_email, is_valid_password, generate_access_token, set_true_after_5_minutes
 import random
 from Verify import generate_unique_filename
 from flask_jwt_extended import JWTManager, get_jwt_identity, jwt_required
@@ -27,7 +27,6 @@ app.static_url_path = '/static'
 app.static_folder = 'S:/Media Storage'
 
 configure_uploads(app, (image, texts, videos))
-
 class BaseRegistration:
     @staticmethod
     def get_user_data(data):
@@ -456,8 +455,8 @@ class ProfileText(Resource):
             })
 
         return jsonify(media_data)
-
 class Images(Resource):
+    @jwt_required()
     def get(self):
         media_objects = mongo.db.images.find()
         media_list = []
@@ -483,8 +482,8 @@ class Images(Resource):
             media_list.append(media_data)
 
         return jsonify(media_list)
-
 class Videos(Resource):
+    @jwt_required()
     def get(self):
         media_objects = mongo.db.videos.find()
         media_list = []
@@ -513,6 +512,7 @@ class Videos(Resource):
 
         return jsonify(media_list)
 class Texts(Resource):
+    @jwt_required()
     def get(self):
         media_objects = mongo.db.texts.find()
         media_list = []
@@ -533,14 +533,13 @@ class Texts(Resource):
                 'file_link': file_link,
                 'time': time,
                 'date': date,
-                'type' : 'Text'
+                'type': 'Text'
             }
 
             # Append data to the list
             media_list.append(media_data)
 
         return jsonify(media_list)
-
 
 api.add_resource(Register, '/register')
 api.add_resource(RegisterVerify, '/register_verify/<username>')
@@ -552,13 +551,13 @@ api.add_resource(ForgetPassword, '/forget_password')
 api.add_resource(ResetPassword, '/reset_password/<username>')
 # field to get or post "username","email","display_picture","country","friends","tweets","reels"
 api.add_resource(Profile, '/profile')
-api.add_resource(UploadImage,'/upload_image')
-api.add_resource(UploadVideo,'/upload_video')
-api.add_resource(UploadText,'/upload_text')
+api.add_resource(UploadImage, '/upload_image')
+api.add_resource(UploadVideo, '/upload_video')
+api.add_resource(UploadText, '/upload_text')
 api.add_resource(Visit_Profile, '/profile/<username>')
-api.add_resource(ProfileImage, '/profile/image/<username>','/profile/image')
-api.add_resource(ProfileVideo, '/profile/video/<username>','/profile/video')
-api.add_resource(ProfileText, '/profile/text/<username>','/profile/text')
+api.add_resource(ProfileImage, '/profile/image/<username>', '/profile/image')
+api.add_resource(ProfileVideo, '/profile/video/<username>', '/profile/video')
+api.add_resource(ProfileText, '/profile/text/<username>', '/profile/text')
 api.add_resource(Images, '/image')
 api.add_resource(Videos, '/video')
 api.add_resource(Texts, '/text')

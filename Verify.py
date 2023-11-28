@@ -4,13 +4,10 @@ import smtplib
 from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
 from flask_jwt_extended import create_access_token
-from flask_jwt_extended import JWTManager
 from datetime import timedelta
 import time
-import os
 import uuid
 from datetime import datetime
-
 def is_valid_email(email):
     """
     Validate the format of an email address and check if the domain has valid MX records.
@@ -32,7 +29,6 @@ def is_valid_email(email):
         return False
     except dns.resolver.Timeout:
         return False
-
 def send_email(to_email, subject, body):
     """
     Send an email using Gmail's SMTP server.
